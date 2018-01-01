@@ -1,0 +1,56 @@
+This is a state tracker for the game of [Hanabi]. It exposes a REST API for
+interacting with the state of multiple games.
+
+# Current state
+At the moment, the system can track for multiple games:
+
+  * Cards in each player's hand
+  * Cards in the deck
+  * Cards successfully played
+  * Cards discarded/unsuccessfully played
+  * Fuse tokens
+  * Information tokens
+
+# API exposed
+## `/game`
+### PUT
+Create a new game, returning the game ID as `{id: 3}`, for instance.
+
+## `/game/<id>`
+### GET
+Download a complete dump of the specified game in its current state.
+
+## `/game/<id>/<player>`
+### GET
+Download the currently-visible state of the game from the perspective of the
+given player.
+
+## `/discard/<game>/<player>`
+### POST
+Have the specified player make the "discard" move in the specified game.
+
+This will regain a knowledge token, if there are any to be gained, and will
+draw a new card.
+
+Supply the data `card_index=0`, for example, where `0` is the index of the card
+to be discarded. (Card order is maintained strictly, so `0` refers to the first
+card from the left in one's hand.)
+
+## `/play/<game>/<player>`
+### PLAY
+Have the specified player attempt to play a card in the specified game.
+
+If the play is unsuccessful, a life will be lost.
+
+Supply the data `card_index=0`, for example, where `0` is the index of the card
+to be played. (Card order is maintained strictly, so `0` refers to the first
+card from the left in one's hand.)
+
+# Future work ideas
+
+  * Make the data storage format version-aware.
+  * Track which information has been revealed about each specific card.
+  * Decide/implement a way to tell the players about moves which have been made.
+  * Log the game history.
+
+[Hanabi]: https://en.wikipedia.org/wiki/Hanabi_(card_game)
