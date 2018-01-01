@@ -175,6 +175,11 @@ class PlayCard(Resource):
         if _can_play(data[cache.played_key], card_to_play):
             data[cache.played_key].append(player_hand[args.card_index])
             retval = True
+            if card_to_play['rank'] == 5:
+                # Get a knowledge back
+                if data[cache.knowledge_key]['used'] != 0:
+                    data[cache.knowledge_key]['used'] -= 1
+                    data[cache.knowledge_key]['available'] += 1
             log("Player '{}' played card {}.".format(player, card_to_play),
                 game=game_id)
         else:
