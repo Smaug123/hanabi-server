@@ -6,11 +6,20 @@ from flask_restful import Resource, abort, reqparse
 from . import cache
 from . import card
 
-_DATA_STORES = os.path.join(os.path.expanduser('~'), '.hanabigames')
+_DATA_STORES = os.path.join(os.path.expanduser('~'), '.hanabi')
 _EXTENSION = '.han'
 
 
 _colours = card.HanabiColour.__members__.keys()
+
+
+def _game_log_path(game_id):
+    return os.path.join(_DATA_STORES, '{}.log'.format(game_id))
+
+
+def log(string, game):
+    with open(_game_log_path(game), 'a') as f:
+        f.write("{}\n".format(string))
 
 
 def _validate_game_id(game_id):
@@ -38,7 +47,7 @@ def _validate_player_in_game(data, player):
     """
     Test whether the player is in the given game.
     """
-    players = data[cache.players]
+    players = data[cache.players_key]
     if player not in players:
         abort(400,
               message="Player {} not found in game".format(player))
@@ -117,22 +126,27 @@ class Discard(Resource):
         player_hand = data[cache.hands_key][player]
 
         parser = reqparse.RequestParser()
-        parser.add_argument('card_index', type=int)
+        parser.add_argument('card_index', type=int, required=True)
         args = parser.parse_args()
 
         if args.card_index < 0 or args.card_index >= len(player_hand):
             abort(400, message="Card {} not valid.".format(args.card_index))
 
         # Discard the card with given index.
-        drawn_card = data[cache.deck_key].pop()
-        data[cache.discards_key].append(player_hand[args.card_index])
-        player_hand[args.card_index] = drawn_card
+        discarded_card = player_hand[args.card_index]
+        log("Player '{}' discarded card {}.".format(player, discarded_card),
+            game=game_id)
+
+        data[cache.discards_key].append(discarded_card)
+
         if data[cache.knowledge_key]['used'] != 0:
             data[cache.knowledge_key]['used'] -= 1
             data[cache.knowledge_key]['available'] += 1
 
-        data_store.replace(data)
+        drawn_card = data[cache.deck_key].pop()
+        player_hand[args.card_index] = drawn_card
 
+        data_store.replace(data)
         return True
 
 
@@ -150,7 +164,7 @@ class PlayCard(Resource):
         player_hand = data[cache.hands_key][player]
 
         parser = reqparse.RequestParser()
-        parser.add_argument('card_index', type=int)
+        parser.add_argument('card_index', type=int, required=True)
         args = parser.parse_args()
 
         if args.card_index < 0 or args.card_index >= len(player_hand):
@@ -161,13 +175,19 @@ class PlayCard(Resource):
         if _can_play(data[cache.played_key], card_to_play):
             data[cache.played_key].append(player_hand[args.card_index])
             retval = True
+            log("Player '{}' played card {}.".format(player, card_to_play),
+                game=game_id)
         else:
             retval = False
+            log("Player '{}' played card {} wrongly.".format(player,
+                                                             card_to_play),
+                game=game_id)
             data[cache.discards_key].append(player_hand[args.card_index])
             if data[cache.lives_key]["available"] > 0:
                 data[cache.lives_key]["used"] += 1
                 data[cache.lives_key]["available"] -= 1
             if data[cache.lives_key]["available"] <= 0:
+                log("Game over.")
                 return "All lives exhausted. Game over."
 
         drawn_card = data[cache.deck_key].pop()
@@ -176,6 +196,48 @@ class PlayCard(Resource):
         data_store.replace(data)
 
         return retval
+
+
+class Inform(Resource):
+    def post(self, game_id, player):
+        """
+        Expects recipient=Patrick and either colour=red or rank=5, for instance.
+        """
+        _validate_game_id(game_id)
+        _validate_game_exists(game_id)
+
+        data_path = _game_data_path(game_id)
+        data_store = cache.GameDataStore(data_path)
+        data = data_store.get()
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('recipient', type=str, required=True)
+        parser.add_argument('colour', choices=tuple(_colours) + ("",))
+        parser.add_argument('rank', type=int)
+        args = parser.parse_args()
+
+        _validate_player_in_game(data, args.recipient)
+
+        if (args.colour and args.rank) or not (args.colour or args.rank):
+            abort(400, message="Supply exactly one of colour and rank.")
+
+        if args.colour:
+            matching = [i
+                        for i, c in enumerate(data[cache.hands_key][args.recipient])
+                        if c['colour'] == args.colour]
+            description = 'colour {}'.format(args.colour)
+        else:
+            assert args.rank
+            matching = [i
+                        for i, c in enumerate(data[cache.hands_key][args.recipient])
+                        if c['rank'] == args.rank]
+            description = 'rank {}'.format(args.rank)
+
+        summary = "Player '{}' gave {} in hand of player '{}': positions {}."
+        summary = summary.format(player, description, args.recipient, matching)
+        log(summary, game_id)
+
+        return matching
 
 
 class Game(Resource):
@@ -211,14 +273,16 @@ class Game(Resource):
         Create a new game, returning the game ID.
         """
         parser = reqparse.RequestParser()
-        parser.add_argument('players', type=str,
-                            help='Player names, comma-separated')
+        parser.add_argument('player', type=str,
+                            action='append',
+                            help='Player names',
+                            required=True)
         args = parser.parse_args()
 
         new_id = _get_new_game_index()
         data_path = _game_data_path(new_id)
         data = cache.GameDataStore(data_path)
-        data.create(args['players'].split(','))
+        data.create(args['player'])
 
         return {'id': new_id}
 

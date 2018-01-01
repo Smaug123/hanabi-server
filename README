@@ -16,6 +16,8 @@ At the moment, the system can track for multiple games:
 ### PUT
 Create a new game, returning the game ID as `{id: 3}`, for instance.
 
+Arguments: e.g. `-d "player=bob" -d "player=sue" -d "player=joe"`
+
 ## `/game/<id>`
 ### GET
 Download a complete dump of the specified game in its current state.
@@ -37,7 +39,7 @@ to be discarded. (Card order is maintained strictly, so `0` refers to the first
 card from the left in one's hand.)
 
 ## `/play/<game>/<player>`
-### PLAY
+### POST
 Have the specified player attempt to play a card in the specified game.
 
 If the play is unsuccessful, a life will be lost.
@@ -46,11 +48,20 @@ Supply the data `card_index=0`, for example, where `0` is the index of the card
 to be played. (Card order is maintained strictly, so `0` refers to the first
 card from the left in one's hand.)
 
+## `/inform/<game>/<player>`
+### POST
+Have the specified player give a recipient information about their hand.
+
+Supply the data `recipient=Patrick` to specify the recipient of the information,
+and either one of the following:
+
+  * data `colour=Red` to specify that you are pointing out red cards.
+  * data `rank=5` to specify that you are pointing out cards of rank 5.
+
 # Future work ideas
 
   * Make the data storage format version-aware.
   * Track which information has been revealed about each specific card.
   * Decide/implement a way to tell the players about moves which have been made.
-  * Log the game history.
 
 [Hanabi]: https://en.wikipedia.org/wiki/Hanabi_(card_game)

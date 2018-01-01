@@ -28,6 +28,9 @@ HanabiWeb.hanabi.PlayCard.method_decorators.append(limiter.limit("10 per minute"
 api.add_resource(HanabiWeb.hanabi.PlayCard,
                  '/play/<int:game_id>/<string:player>')
 
+HanabiWeb.hanabi.Inform.method_decorators.append(limiter.limit("10 per minute"))
+api.add_resource(HanabiWeb.hanabi.Inform,
+                 '/inform/<int:game_id>/<string:player>')
 
 if __name__ == "__main__":
     app.run(debug=True)
