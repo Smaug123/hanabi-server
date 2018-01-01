@@ -58,6 +58,13 @@ and either one of the following:
   * data `colour=Red` to specify that you are pointing out red cards.
   * data `rank=5` to specify that you are pointing out cards of rank 5.
 
+Returns a list of the indices of the matching cards in that player's hand.
+
+## `/history/<game>`
+### GET
+Retrieve the complete history of the specified game, output as a list of
+string descriptions.
+
 # Future work ideas
 
   * Make the data storage format version-aware.

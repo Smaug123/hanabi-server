@@ -287,3 +287,17 @@ class Game(Resource):
         return {'id': new_id}
 
 
+class History(Resource):
+    def get(self, game_id):
+        _validate_game_id(game_id)
+        _validate_game_exists(game_id)
+
+        path = _game_log_path(game_id)
+
+        if not os.path.exists(path):
+            return []
+
+        with open(path) as f:
+            lines = f.readlines()
+
+        return [l.strip() for l in lines]
