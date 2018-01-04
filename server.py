@@ -16,6 +16,7 @@ limiter = Limiter(app,
 
 HanabiWeb.hanabi.Game.method_decorators.append(limiter.limit("2 per minute"))
 api.add_resource(HanabiWeb.hanabi.Game,
+                 '/game',
                  '/game/<int:game_id>',
                  '/game/<int:game_id>/<string:player>')
 

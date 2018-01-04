@@ -246,7 +246,7 @@ class Inform(Resource):
 
 
 class Game(Resource):
-    def get(self, game_id, player=None):
+    def get(self, game_id=None, player=None):
         """
         Return the state of the game as viewed by the given player.
 
