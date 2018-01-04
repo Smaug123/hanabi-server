@@ -286,8 +286,19 @@ class Game(Resource):
 
         new_id = _get_new_game_index()
         data_path = _game_data_path(new_id)
-        data = cache.GameDataStore(data_path)
-        data.create(args['player'])
+        data_store = cache.GameDataStore(data_path)
+        data_store.create(args['player'])
+        data = data_store.get()
+
+        log('New game with players {}'.format(data[cache.players_key]), new_id)
+        log('Deck:', new_id)
+        for c in data[cache.deck_key]:
+            log('  {}'.format(str(c)), new_id)
+        log('Hands:', new_id)
+        for p in data[cache.players_key]:
+            log('  {}'.format(p), new_id)
+            for c in data[cache.hands_key][p]:
+                log('    {}'.format(str(c)), new_id)
 
         return {'id': new_id}
 

@@ -13,7 +13,7 @@ class HanabiColour(enum.Enum):
 
 class HanabiCard(dict):
     def __str__(self):
-        return "{} {}".format(self.rank, self.colour)
+        return "{} {}".format(self['rank'], self['colour'])
 
     def __repr__(self):
         return "HanabiCard({}, {})".format(self.get('colour'), self.get('rank'))
