@@ -34,7 +34,8 @@ api.add_resource(HanabiWeb.hanabi.Inform,
 
 HanabiWeb.hanabi.History.method_decorators.append(limiter.limit('5 per minute'))
 api.add_resource(HanabiWeb.hanabi.History,
-                 '/history/<int:game_id>')
+                 '/history/<int:game_id>',
+                 '/history/<int:game_id>/<string:player>')
 
 if __name__ == "__main__":
     app.run(debug=True)

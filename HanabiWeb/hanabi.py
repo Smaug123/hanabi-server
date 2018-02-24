@@ -300,11 +300,13 @@ class Game(Resource):
             for c in data[cache.hands_key][p]:
                 log('    {}'.format(str(c)), new_id)
 
+        log('-----')
+
         return {'id': new_id}
 
 
 class History(Resource):
-    def get(self, game_id):
+    def get(self, game_id, player=None):
         _validate_game_id(game_id)
         _validate_game_exists(game_id)
 
@@ -316,4 +318,13 @@ class History(Resource):
         with open(path) as f:
             lines = f.readlines()
 
-        return [l.strip() for l in lines]
+        if player is None:
+            return [l.strip() for l in lines]
+
+        # Filter by what that player can see: all entries in the log past the
+        # line of dashes are public.
+        dashes = lines.index('-----')
+        if dashes == len(lines):
+            return []
+        else:
+            return lines[dashes+1:]

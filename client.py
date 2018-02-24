@@ -24,6 +24,7 @@ _DEFAULT_PLAYER_FILE = os.path.join(os.path.expanduser("~"),
 _DEFAULT_SERVER_FILE = os.path.join(os.path.expanduser("~"),
                                     ".hanabi", "server.txt")
 
+
 def get_player():
     with open(_DEFAULT_PLAYER_FILE) as f:
         default_player = f.readlines()[0].strip()
@@ -44,10 +45,6 @@ def get_server():
     return input_str
 
 
-def get_board_state(game_id, player):
-    pass
-
-
 def print_welcome():
     print("Hanabi client.")
     print("Command-line version. Press Ctrl+C to exit.")
@@ -58,14 +55,17 @@ class Actions(enum.Enum):
     PLAY = 1
     DISCARD = 2
     HISTORY = 3
-    INFORM = 4
+    ALL_HISTORY = 4
+    INFORM = 5
 
 
 _recognised_actions = {'print': (Actions.PRINT_GAMESTATE, 0),
                        'play': (Actions.PLAY, 1),
                        'discard': (Actions.DISCARD, 1),
                        'history': (Actions.HISTORY, 0),
+                       'all_history': (Actions.ALL_HISTORY, 0),
                        'inform': (Actions.INFORM, 1)}
+
 
 def get_action():
     """
@@ -111,20 +111,26 @@ def get_top(cards, colour):
     return max(iter)
 
 
-def request_history(server, player, game_id):
+def request_history(server, game_id, player=None):
     """
     Request the history from the server from the point of view of a player.
+
+    TODO: this API currently doesn't filter based on who is requesting. The
+    server needs to be fixed to do that.
     """
-    # print("Requesting history...")
-    # url = server + '/history/{}'.format(game_id)
-    print("History is not yet implemented.")
+    print("Requesting history...")
+    url = server + '/history/{}'.format(game_id)
+    if player is not None:
+        url += '/{}'.format(player)
+    r = requests.get('http://' + url)
+    return r.json()
 
 
 def print_history(history):
     """
     Print the history object retrieved from the server.
     """
-    pass
+    print('\n'.join(history))
 
 
 def print_gamestate(state):
@@ -271,7 +277,10 @@ if __name__ == '__main__':
             state = request_gamestate(server, player, game_id)
             print_gamestate(state)
         elif action == Actions.HISTORY:
-            history = request_history(server, player, game_id)
+            history = request_history(server, game_id, player=player)
+            print_history(history)
+        elif action == Actions.ALL_HISTORY:
+            history = request_history(server, game_id)
             print_history(history)
 
 # TODO: need to pip install requests[security] when installing this

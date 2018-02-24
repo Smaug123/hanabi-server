@@ -65,6 +65,11 @@ Returns a list of the indices of the matching cards in that player's hand.
 Retrieve the complete history of the specified game, output as a list of
 string descriptions.
 
+## `/history/<game>/<player>`
+### GET
+Retrieve the history of the specified game from the point of view of the given
+player, output as a list of string descriptions.
+
 # Future work ideas
 
   * Make the data storage format version-aware.
