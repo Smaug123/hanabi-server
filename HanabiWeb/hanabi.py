@@ -300,7 +300,7 @@ class Game(Resource):
             for c in data[cache.hands_key][p]:
                 log('    {}'.format(str(c)), new_id)
 
-        log('-----')
+        log('-----', new_id)
 
         return {'id': new_id}
 
